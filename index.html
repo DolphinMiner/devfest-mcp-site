@@ -1,2 +1,447 @@
 <!DOCTYPE html>
-<html><body>Placeholder</body></html></body></html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevFest Workshop · Chrome DevTools MCP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #050505;
+            --bg-alt: #0f0f10;
+            --fg: #f5f5f5;
+            --muted: #a0a0a0;
+            --line: rgba(255,255,255,0.08);
+            --accent: #f6f8fa;
+            --accent-strong: #58a6ff;
+            --card: rgba(255,255,255,0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 80px,
+                linear-gradient(180deg, var(--line) 1px, transparent 1px) 0 0 / 80px;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(18px);
+            background: rgba(5,5,5,0.85);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .brand {
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .menu {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .menu button {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--muted);
+            padding: 8px 16px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: color 0.2s ease, border 0.2s ease, background 0.2s ease;
+        }
+
+        .menu button.active,
+        .menu button:hover {
+            color: var(--accent-strong);
+            border-color: var(--line);
+            background: rgba(88,166,255,0.08);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 24px 120px;
+        }
+
+        .page {
+            display: none;
+            animation: fade 0.4s ease;
+        }
+
+        .page.active {
+            display: grid;
+            gap: 40px;
+        }
+
+        @keyframes fade {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px;
+            align-items: end;
+        }
+
+        .hero .badge {
+            font-size: 12px;
+            letter-spacing: 4px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .hero h1 {
+            font-size: clamp(36px, 6vw, 64px);
+            line-height: 1.1;
+        }
+
+        .hero p {
+            margin-top: 24px;
+            color: var(--muted);
+            line-height: 1.6;
+            max-width: 540px;
+        }
+
+        .hero .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .hero .meta span {
+            border: 1px solid var(--line);
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 32px;
+            background: var(--bg-alt);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+        }
+
+        .panel h2 {
+            font-size: 22px;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 20px;
+            background: var(--card);
+            min-height: 160px;
+        }
+
+        .card h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+
+        .card p {
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .list li {
+            list-style: none;
+            border-top: 1px solid var(--line);
+            padding-top: 16px;
+        }
+
+        .list strong {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 6px;
+            color: var(--accent);
+        }
+
+        .about {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 32px;
+            align-items: center;
+        }
+
+        .avatar {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            border: 1px solid var(--line);
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25), transparent 45%), var(--card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin: 0 auto;
+        }
+
+        a.cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            color: var(--accent-strong);
+            text-decoration: none;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        footer {
+            border-top: 1px solid var(--line);
+            text-align: center;
+            padding: 32px 24px 80px;
+            color: var(--muted);
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 640px) {
+            .panel { padding: 24px; }
+            .hero .meta span { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav">
+            <div class="brand">DEVFEST · WHITE</div>
+            <div class="menu" role="tablist">
+                <button class="active" data-target="home" role="tab">首页 / HOME</button>
+                <button data-target="gdg" role="tab">GDG & DEVFEST</button>
+                <button data-target="mcp" role="tab">DEVTOOLS MCP</button>
+                <button data-target="about" role="tab">关于 WHITE</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="home" class="page active" aria-label="Workshop Overview">
+            <div class="hero panel">
+                <div>
+                    <p class="badge">GOOGLE DEVFEST WORKSHOP · 2025</p>
+                    <h1>Chrome DevTools MCP Server 深度工作坊</h1>
+                    <p>
+                        记录我在 Google DevFest 上关于 Chrome DevTools MCP Server 的实践，
+                        以科技化黑白线条的官网形式，呈现整个活动的灵感、议程与洞察。
+                    </p>
+                    <div class="meta">
+                        <span>主题 · Chrome DevTools MCP Server</span>
+                        <span>地点 · DevFest Workshop</span>
+                        <span>主讲 · White</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>WORKSHOP SNAPSHOT</h3>
+                    <p>聚焦 AI 辅助开发与浏览器调试协同，让模型通过 MCP 协议操控 DevTools，探索智能化前端工作流。</p>
+                    <ul class="list">
+                        <li>
+                            <strong>核心亮点</strong>
+                            AI + DevTools 联动、实时调试、自动化洞察。
+                        </li>
+                        <li>
+                            <strong>产出</strong>
+                            可复用的 MCP Server 脚手架与操作实录。
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>议程 / TIMELINE</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>01 · OPENING</h3>
+                        <p>快速介绍 GDG 生态、DevFest 主题与本次 Workshop 的目标设定。</p>
+                    </div>
+                    <div class="card">
+                        <h3>02 · MCP THEORY</h3>
+                        <p>拆解 Model Context Protocol，理解 DevTools MCP Server 的通信结构。</p>
+                    </div>
+                    <div class="card">
+                        <h3>03 · HANDS-ON</h3>
+                        <p>现场搭建 MCP Server，演示如何驱动 Chrome DevTools 完成检查与调试。</p>
+                    </div>
+                    <div class="card">
+                        <h3>04 · Q&A</h3>
+                        <p>讨论 AI-Agent 协作的未来工作方式，收集开发者痛点与灵感。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="gdg" class="page" aria-label="GDG and DevFest">
+            <div class="panel">
+                <h2>GDG · DEVFEST · COMMUNITY</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>GDG PHILOSOPHY</h3>
+                        <p>Google Developer Groups 聚合世界各地的开发者，强调开放、分享与实践驱动。</p>
+                    </div>
+                    <div class="card">
+                        <h3>DEVFEST DNA</h3>
+                        <p>每年一度的开发者盛会，以前沿技术演讲、实战 Workshop、社群展示为核心。</p>
+                    </div>
+                    <div class="card">
+                        <h3>LOCAL IMPACT</h3>
+                        <p>城市级别的线下聚会，连接技术场景与真实业务，催生合作与项目落地。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="panel">
+                <h2>为何在 DevFest 探索 DevTools MCP？</h2>
+                <ul class="list">
+                    <li>
+                        <strong>跨界协作</strong>
+                        将 AI 模型与浏览器调试融合，展示开发工具的下一阶段。
+                    </li>
+                    <li>
+                        <strong>开放生态</strong>
+                        GDG 社群提供反馈循环，让 MCP Server 更贴近真实需求。
+                    </li>
+                    <li>
+                        <strong>灵感孵化</strong>
+                        DevFest 的多元议题帮助我们想象 AI 在开发流程中的更多可能性。
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="mcp" class="page" aria-label="DevTools MCP">
+            <div class="panel">
+                <h2>DEVTOOLS MCP SERVER · 深度解读</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>PROTOCOL</h3>
+                        <p>Model Context Protocol 让 AI 拥有“上下文入口”，通过统一接口调用浏览器能力。</p>
+                    </div>
+                    <div class="card">
+                        <h3>DEVTOOLS BRIDGE</h3>
+                        <p>MCP Server 连接 Chrome DevTools Protocol，开放检查、操作、调试的完整权限。</p>
+                    </div>
+                    <div class="card">
+                        <h3>WORKFLOW</h3>
+                        <p>AI-Agent → MCP → DevTools：自动刷新、捕获日志、执行脚本，形成循环反馈。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="panel">
+                <h2>现场实践要点</h2>
+                <ul class="list">
+                    <li>
+                        <strong>环境搭建</strong>
+                        从 GitHub 获取示例服务器，配置 Chrome profile，连接模型助手。
+                    </li>
+                    <li>
+                        <strong>指令设计</strong>
+                        通过 MCP 工具集成检查、控制台、样式调整等 DevTools 能力。
+                    </li>
+                    <li>
+                        <strong>可视化反馈</strong>
+                        频繁刷新页面，实时展示 AI 调试过程，让参与者直观看到成效。
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="about" class="page" aria-label="About White">
+            <div class="panel about">
+                <div class="avatar">W</div>
+                <div>
+                    <p class="badge">ABOUT WHITE</p>
+                    <h2>White · 独立开发者</h2>
+                    <p style="color:var(--muted); line-height:1.6; margin-top:12px;">
+                        我是一名独立开发者，热衷把 AI 能力嵌入调试与协作链路。
+                        在音乐与宇宙理论中找寻灵感，再把这种抽象的节奏感迁移到代码结构里。
+                    </p>
+                    <div class="meta" style="margin-top:24px;">
+                        <span>兴趣 · 音乐 / 宇宙理论</span>
+                        <span>身份 · DevTools MCP Workshop 讲者</span>
+                    </div>
+                    <div style="margin-top:28px; display:flex; gap:16px; flex-wrap:wrap;">
+                        <a class="cta" href="mailto:hc.wan1024@gmail.com" target="_blank">联系 · hc.wan1024@gmail.com</a>
+                        <a class="cta" href="https://github.com" target="_blank">参考风格 · GitHub</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        © 2025 White · Google DevFest Workshop · Chrome DevTools MCP Server
+    </footer>
+
+    <script>
+        const navButtons = document.querySelectorAll('.menu button');
+        const pages = document.querySelectorAll('.page');
+
+        function activate(targetId) {
+            navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.target === targetId));
+            pages.forEach(page => page.classList.toggle('active', page.id === targetId));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        navButtons.forEach(btn => {
+            btn.addEventListener('click', () => activate(btn.dataset.target));
+        });
+    </script>
+</body>
+</html>
